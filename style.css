@@ -89,6 +89,10 @@ h1 {
     gap: 20px;
 }
 
+.training-layout {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .panel,
 .stat-card {
     border: 1px solid rgba(92, 74, 167, 0.12);
@@ -149,8 +153,18 @@ select {
     margin-top: 0;
 }
 
-.exercise-form .secondary-button {
+.exercise-form .primary-button {
     margin-top: 4px;
+}
+
+.exercise-name-input {
+    min-width: 180px;
+}
+
+.exercise-table-button {
+    width: auto;
+    margin-top: 0;
+    padding: 10px 14px;
 }
 
 .message {

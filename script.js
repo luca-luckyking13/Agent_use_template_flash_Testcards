@@ -117,8 +117,19 @@ function createSetFields() {
     }
 }
 
+// Checks whether another exercise already uses this name.
+function exerciseNameExists(name, ignoredIndex) {
+    for (let index = 0; index < exercises.length; index++) {
+        if (index !== ignoredIndex && exercises[index].toLowerCase() === name.toLowerCase()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Adds a new exercise to the saved list.
-function addExercise() {
+function addExercise(event) {
+    event.preventDefault();
     const nameInput = document.getElementById("newExerciseName");
     const exerciseName = nameInput.value.trim();
     const message = document.getElementById("exerciseMessage");
@@ -127,19 +138,90 @@ function addExercise() {
         message.textContent = "Bitte einen Namen eingeben.";
         return;
     }
-
-    for (let index = 0; index < exercises.length; index++) {
-        if (exercises[index].toLowerCase() === exerciseName.toLowerCase()) {
-            message.textContent = "Diese Übung ist schon vorhanden.";
-            return;
-        }
+    if (exerciseNameExists(exerciseName, -1)) {
+        message.textContent = "Diese Übung ist schon vorhanden.";
+        return;
     }
 
     exercises.push(exerciseName);
     localStorage.setItem("exerciseList", JSON.stringify(exercises));
     updateExerciseSelect();
+    showExerciseList();
     nameInput.value = "";
     message.textContent = "Übung wurde hinzugefügt.";
+    showStatistics();
+}
+
+// Shows every saved exercise with an input to change its name.
+function showExerciseList() {
+    const exerciseTable = document.getElementById("exerciseTable");
+    exerciseTable.innerHTML = "";
+
+    for (let index = 0; index < exercises.length; index++) {
+        exerciseTable.appendChild(makeExerciseRow(index));
+    }
+}
+
+// Creates one row with an editable exercise name.
+function makeExerciseRow(index) {
+    const row = document.createElement("tr");
+    const nameCell = document.createElement("td");
+    const actionCell = document.createElement("td");
+    const nameInput = document.createElement("input");
+    const saveButton = document.createElement("button");
+
+    nameInput.className = "exercise-name-input";
+    nameInput.value = exercises[index];
+    nameInput.setAttribute("aria-label", "Übungsname ändern");
+    saveButton.className = "secondary-button exercise-table-button";
+    saveButton.textContent = "Speichern";
+    saveButton.dataset.index = index;
+    actionCell.appendChild(saveButton);
+    nameCell.appendChild(nameInput);
+    row.appendChild(nameCell);
+    row.appendChild(actionCell);
+    return row;
+}
+
+// Updates historical training entries after an exercise is renamed.
+function updateTrainingExerciseNames(oldName, newName) {
+    for (let index = 0; index < trainingEntries.length; index++) {
+        if (trainingEntries[index].exercise === oldName) {
+            trainingEntries[index].exercise = newName;
+        }
+    }
+    localStorage.setItem("trainingEntries", JSON.stringify(trainingEntries));
+}
+
+// Saves a changed exercise name and updates its saved training entries.
+function renameExercise(event) {
+    if (!event.target.classList.contains("secondary-button")) {
+        return;
+    }
+
+    const exerciseIndex = Number(event.target.dataset.index);
+    const input = event.target.parentElement.previousElementSibling.querySelector("input");
+    const newName = input.value.trim();
+    const oldName = exercises[exerciseIndex];
+    const message = document.getElementById("exerciseMessage");
+
+    if (newName === "") {
+        message.textContent = "Bitte einen Namen eingeben.";
+        return;
+    }
+    if (exerciseNameExists(newName, exerciseIndex)) {
+        message.textContent = "Diese Übung ist schon vorhanden.";
+        return;
+    }
+
+    exercises[exerciseIndex] = newName;
+    localStorage.setItem("exerciseList", JSON.stringify(exercises));
+    updateTrainingExerciseNames(oldName, newName);
+    updateExerciseSelect();
+    showExerciseList();
+    showTrainingTable();
+    showStatistics();
+    message.textContent = "Übungsname wurde geändert.";
 }
 
 // Reads all set fields and saves one complete training entry.
@@ -239,23 +321,19 @@ function deleteTraining(event) {
 
 // Switches between the training and statistics pages.
 function openTab(tabName) {
-    const trainingPage = document.getElementById("trainingPage");
-    const statisticsPage = document.getElementById("statisticsPage");
-    const trainingTab = document.getElementById("trainingTab");
-    const statisticsTab = document.getElementById("statisticsTab");
+    const tabNames = ["training", "statistics", "exercise"];
+    for (let index = 0; index < tabNames.length; index++) {
+        document.getElementById(tabNames[index] + "Page").classList.remove("active");
+        document.getElementById(tabNames[index] + "Tab").classList.remove("active");
+    }
 
-    trainingPage.classList.remove("active");
-    statisticsPage.classList.remove("active");
-    trainingTab.classList.remove("active");
-    statisticsTab.classList.remove("active");
-
-    if (tabName === "training") {
-        trainingPage.classList.add("active");
-        trainingTab.classList.add("active");
-    } else {
-        statisticsPage.classList.add("active");
-        statisticsTab.classList.add("active");
+    document.getElementById(tabName + "Page").classList.add("active");
+    document.getElementById(tabName + "Tab").classList.add("active");
+    if (tabName === "statistics") {
         showStatistics();
+    }
+    if (tabName === "exercise") {
+        showExerciseList();
     }
 }
 
@@ -349,9 +427,11 @@ function startApp() {
     createSetFields();
     showTrainingTable();
     showStatistics();
+    showExerciseList();
 
     document.getElementById("createSetsButton").addEventListener("click", createSetFields);
-    document.getElementById("addExerciseButton").addEventListener("click", addExercise);
+    document.getElementById("exerciseForm").addEventListener("submit", addExercise);
+    document.getElementById("exerciseTable").addEventListener("click", renameExercise);
     document.getElementById("trainingForm").addEventListener("submit", saveTraining);
     document.getElementById("trainingTable").addEventListener("click", deleteTraining);
     document.getElementById("trainingTab").addEventListener("click", function () {
@@ -359,6 +439,9 @@ function startApp() {
     });
     document.getElementById("statisticsTab").addEventListener("click", function () {
         openTab("statistics");
+    });
+    document.getElementById("exerciseTab").addEventListener("click", function () {
+        openTab("exercise");
     });
 }
 

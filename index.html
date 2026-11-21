@@ -16,11 +16,12 @@
             <div class="nav-tabs" aria-label="Seiten">
                 <button class="tab-button active" id="trainingTab" type="button">Training</button>
                 <button class="tab-button" id="statisticsTab" type="button">Statistik</button>
+                <button class="tab-button" id="exerciseTab" type="button">Übungen bearbeiten</button>
             </div>
         </header>
 
         <section class="page active" id="trainingPage">
-            <div class="layout">
+            <div class="layout training-layout">
                 <div class="panel">
                     <h2>Übung hinzufügen</h2>
                     <form id="trainingForm">
@@ -38,18 +39,6 @@
 
                         <button class="primary-button" type="submit">Training speichern</button>
                     </form>
-                </div>
-
-                <div class="panel">
-                    <div class="panel-heading">
-                        <h2>Neue Übung</h2>
-                    </div>
-                    <div class="exercise-form">
-                        <label for="newExerciseName">Name der Übung</label>
-                        <input type="text" id="newExerciseName" placeholder="Zum Beispiel Kreuzheben">
-                        <button class="secondary-button" id="addExerciseButton" type="button">Zur Liste hinzufügen</button>
-                    </div>
-                    <p class="message" id="exerciseMessage"></p>
                 </div>
             </div>
 
@@ -98,6 +87,33 @@
                 <div class="panel chart-panel">
                     <h2>Gewicht nach Übung</h2>
                     <div class="bar-chart" id="weightChart"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="page" id="exercisePage">
+            <div class="panel">
+                <h2>Neue Übung hinzufügen</h2>
+                <form class="exercise-form" id="exerciseForm">
+                    <label for="newExerciseName">Name der Übung</label>
+                    <input type="text" id="newExerciseName" placeholder="Zum Beispiel Kreuzheben" required>
+                    <button class="primary-button" id="addExerciseButton" type="submit">Zur Datenbank hinzufügen</button>
+                </form>
+                <p class="message" id="exerciseMessage"></p>
+            </div>
+
+            <div class="panel table-panel">
+                <h2>Übungen in der Datenbank bearbeiten</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Übungsname</th>
+                                <th>Name ändern</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exerciseTable"></tbody>
+                    </table>
                 </div>
             </div>
         </section>
