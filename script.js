@@ -450,7 +450,7 @@ function collectExerciseFrequencies(exerciseName, fieldName) {
 // Creates a frequency graph, including an empty graph when no data exists.
 function drawFrequencyChart(container, frequencies, unit) {
     const svg = createSvgElement("svg", {
-        viewBox: "0 0 520 230",
+        viewBox: "0 0 520 280",
         role: "img",
         "aria-label": "Häufigkeitsdiagramm für " + unit
     });
@@ -458,7 +458,7 @@ function drawFrequencyChart(container, frequencies, unit) {
     drawFrequencyAxes(svg, maxCount);
 
     if (frequencies.length === 0) {
-        addSvgText(svg, 285, 112, "Noch keine Satzdaten");
+        addSvgText(svg, 285, 140, "Noch keine Satzdaten");
     } else {
         drawFrequencyLine(svg, frequencies, maxCount, unit);
     }
@@ -481,7 +481,7 @@ function drawFrequencyAxes(svg, maxCount) {
     const left = 52;
     const right = 500;
     const top = 18;
-    const bottom = 185;
+    const bottom = 230;
     addFrequencyGridLine(svg, left, right, top);
     addFrequencyGridLine(svg, left, right, bottom);
     if (maxCount > 1) {
@@ -531,7 +531,7 @@ function getFrequencyPoint(frequency, firstValue, lastValue, maxCount) {
     const left = 52;
     const right = 500;
     const top = 18;
-    const bottom = 185;
+    const bottom = 230;
     let x = (left + right) / 2;
     if (lastValue !== firstValue) {
         x = left + ((frequency.value - firstValue) / (lastValue - firstValue)) * (right - left);
@@ -542,19 +542,23 @@ function getFrequencyPoint(frequency, firstValue, lastValue, maxCount) {
 
 // Adds visible data points and their labels to the line chart.
 function addFrequencyPoints(svg, points, unit) {
-    const bottom = 185;
-    const labelStep = Math.ceil(points.length / 7);
+    const bottom = 230;
+    const labelStep = Math.ceil(points.length / 12);
     for (let index = 0; index < points.length; index++) {
         const point = points[index];
         const circle = createSvgElement("circle", {
-            cx: point.x, cy: point.y, r: 5, class: "frequency-point"
+            cx: point.x, cy: point.y, r: 6, class: "frequency-point"
         });
         const title = createSvgElement("title", {});
         title.textContent = point.value + " " + unit + ": " + point.count + " Sätze";
         circle.appendChild(title);
         svg.appendChild(circle);
-        if (points.length <= 7 || index % labelStep === 0 || index === points.length - 1) {
+        if (points.length <= 12 || index % labelStep === 0 || index === points.length - 1) {
             addSvgText(svg, point.x, bottom + 22, point.value, "frequency-value-label");
+        }
+        if (points.length <= 12) {
+            const labelY = point.y < 35 ? point.y + 22 : point.y - 10;
+            addSvgText(svg, point.x, labelY, point.count, "frequency-point-label");
         }
     }
 }
