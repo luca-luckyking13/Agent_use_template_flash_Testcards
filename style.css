@@ -243,10 +243,14 @@ th {
 
 .bar-row {
     display: grid;
-    grid-template-columns: 130px 1fr 60px;
+    grid-template-columns: minmax(140px, 1fr) 2fr 75px;
     gap: 10px;
     align-items: center;
     margin: 14px 0;
+}
+
+.bar-row span {
+    overflow-wrap: anywhere;
 }
 
 .bar-track {

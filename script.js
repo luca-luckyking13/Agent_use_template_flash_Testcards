@@ -366,6 +366,7 @@ function showStatistics() {
     document.getElementById("setTotal").textContent = setTotal;
     showExerciseChart();
     showWeightChart();
+    showRepetitionChart();
 }
 
 // Counts how often each exercise was used.
@@ -382,19 +383,40 @@ function showExerciseChart() {
     drawChart("exerciseChart", exerciseCount, " Mal");
 }
 
-// Finds the highest weight saved for each exercise.
+// Counts how many sets used each weight for each exercise.
 function showWeightChart() {
-    const highestWeights = {};
+    const weightCounts = {};
     for (let entryIndex = 0; entryIndex < trainingEntries.length; entryIndex++) {
         const entry = trainingEntries[entryIndex];
         for (let setIndex = 0; setIndex < entry.sets.length; setIndex++) {
             const weight = entry.sets[setIndex].weight;
-            if (!highestWeights[entry.exercise] || weight > highestWeights[entry.exercise]) {
-                highestWeights[entry.exercise] = weight;
+            const label = entry.exercise + " · " + weight + " kg";
+            if (weightCounts[label]) {
+                weightCounts[label]++;
+            } else {
+                weightCounts[label] = 1;
             }
         }
     }
-    drawChart("weightChart", highestWeights, " kg");
+    drawChart("weightChart", weightCounts, " Sätze");
+}
+
+// Counts how many sets used each repetition number for each exercise.
+function showRepetitionChart() {
+    const repetitionCounts = {};
+    for (let entryIndex = 0; entryIndex < trainingEntries.length; entryIndex++) {
+        const entry = trainingEntries[entryIndex];
+        for (let setIndex = 0; setIndex < entry.sets.length; setIndex++) {
+            const repetitions = entry.sets[setIndex].repetitions;
+            const label = entry.exercise + " · " + repetitions + " Wdh.";
+            if (repetitionCounts[label]) {
+                repetitionCounts[label]++;
+            } else {
+                repetitionCounts[label] = 1;
+            }
+        }
+    }
+    drawChart("repetitionChart", repetitionCounts, " Sätze");
 }
 
 // Creates horizontal bars from the supplied name and number data.
