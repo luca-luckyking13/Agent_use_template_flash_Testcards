@@ -21,43 +21,31 @@
         </header>
 
         <section class="page active" id="trainingPage">
-            <div class="layout training-layout">
-                <div class="panel">
-                    <h2>Trainingseinheit auswählen</h2>
-                    <form id="trainingForm">
-                        <label for="sessionSelect">Gespeicherte Trainingseinheit</label>
-                        <select id="sessionSelect">
-                            <option value="">Neue Trainingseinheit</option>
-                        </select>
-
-                        <label for="trainingDate">Datum der Trainingseinheit</label>
-                        <input type="date" id="trainingDate" required>
-
-                        <div class="exercise-entry-list" id="exerciseEntries"></div>
-                        <button class="secondary-button add-exercise-entry-button" id="addExerciseEntryButton" type="button">+ Übung hinzufügen</button>
-                        <button class="primary-button" type="submit">Trainingseinheit speichern</button>
-                    </form>
+            <div id="trainingOverview">
+                <div class="panel-heading overview-heading">
+                    <h2>Letzte Trainingseinheiten</h2>
+                    <button class="primary-button new-training-button" id="newTrainingButton" type="button">+ Neues Training hinzufügen</button>
                 </div>
+                <div class="training-session-list" id="trainingSessions"></div>
             </div>
 
-            <div class="panel table-panel">
-                <div class="panel-heading">
-                    <h2>Gespeicherte Trainingseinheiten</h2>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Datum</th>
-                                <th>Übung</th>
-                                <th>Sätze</th>
-                                <th>Details</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="trainingTable"></tbody>
-                    </table>
-                </div>
+            <div class="panel training-form-panel" id="trainingFormPanel" hidden>
+                <h2 id="trainingFormHeading">Neues Training</h2>
+                <form id="trainingForm">
+                    <label for="trainingDate">Datum</label>
+                    <input type="date" id="trainingDate" required>
+
+                    <label for="trainingName">Trainingsname</label>
+                    <input type="text" id="trainingName" placeholder="Zum Beispiel Push-Tag" required>
+
+                    <div class="exercise-entry-list" id="exerciseEntries"></div>
+                    <button class="secondary-button add-exercise-entry-button" id="addExerciseEntryButton" type="button">+ Übung hinzufügen</button>
+                    <p class="message" id="trainingMessage"></p>
+                    <div class="form-actions">
+                        <button class="secondary-button cancel-training-button" id="cancelTrainingButton" type="button">Abbrechen</button>
+                        <button class="primary-button" id="saveTrainingButton" type="submit">Training speichern</button>
+                    </div>
+                </form>
             </div>
         </section>
 

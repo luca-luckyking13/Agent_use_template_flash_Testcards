@@ -89,10 +89,6 @@ h1 {
     gap: 20px;
 }
 
-.training-layout {
-    grid-template-columns: minmax(0, 1fr);
-}
-
 .panel,
 .stat-card {
     border: 1px solid rgba(92, 74, 167, 0.12);
@@ -108,6 +104,92 @@ h1 {
 .table-panel,
 .chart-panel {
     margin-top: 20px;
+}
+
+.overview-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.overview-heading h2 {
+    margin: 0;
+}
+
+.new-training-button {
+    width: auto;
+    margin: 0;
+}
+
+.training-session-list {
+    display: grid;
+    gap: 16px;
+}
+
+.session-card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.session-card-heading h3,
+.session-card-heading p {
+    margin: 0;
+}
+
+.session-card-heading p {
+    color: #6c628a;
+}
+
+.session-exercise-list {
+    display: grid;
+    gap: 10px;
+}
+
+.session-exercise-row {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) 2fr;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #ece8f7;
+}
+
+.session-actions,
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.edit-session-button,
+.delete-session-button {
+    width: auto;
+    margin: 0;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.edit-session-button {
+    color: white;
+    background: linear-gradient(135deg, #38bca6, #795bd0);
+}
+
+.delete-session-button {
+    color: #a53d68;
+    background: #fbeaf1;
+}
+
+.form-actions .primary-button,
+.form-actions .secondary-button {
+    flex: 1;
+    margin-top: 0;
 }
 
 label {
@@ -400,6 +482,28 @@ th {
     .exercise-charts,
     .exercise-line-grid {
         grid-template-columns: 1fr;
+    }
+
+    .overview-heading,
+    .session-card-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .session-exercise-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .session-actions,
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .new-training-button,
+    .edit-session-button,
+    .delete-session-button {
+        width: 100%;
     }
 
     .nav-tabs {
