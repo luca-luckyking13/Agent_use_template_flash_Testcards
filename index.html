@@ -24,8 +24,28 @@
             <div id="trainingOverview">
                 <div class="panel-heading overview-heading">
                     <h2>Letzte Trainingseinheiten</h2>
-                    <button class="primary-button new-training-button" id="newTrainingButton" type="button">+ Neues Training hinzufügen</button>
+                    <div class="overview-actions">
+                        <button class="primary-button new-training-button" id="newTrainingButton" type="button">+ Neues Training hinzufügen</button>
+                        <button class="secondary-button" id="loadTestDataButton" type="button">Testdaten aus JSON laden</button>
+                        <input type="file" id="testDataFile" accept=".json,application/json" hidden>
+                    </div>
                 </div>
+                <details class="import-format">
+                    <summary>Benötigtes JSON-Format</summary>
+                    <pre><code>{
+  "exercises": ["Bankdrücken"],
+  "trainingEntries": [
+    {
+      "id": 1,
+      "date": "2026-01-15",
+      "trainingName": "Push",
+      "exercise": "Bankdrücken",
+      "sets": [{"weight": 50, "repetitions": 10}]
+    }
+  ]
+}</code></pre>
+                </details>
+                <p class="message" id="testDataMessage" aria-live="polite"></p>
                 <div class="training-session-list" id="trainingSessions"></div>
             </div>
 

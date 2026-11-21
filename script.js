@@ -85,6 +85,148 @@ function loadExercises() {
     return defaultExercises.slice();
 }
 
+// Opens the file picker for a local test-data JSON file.
+function chooseTestDataFile() {
+    document.getElementById("testDataFile").click();
+}
+
+// Reads the selected JSON file and reports file-reading errors.
+function readTestDataFile(event) {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.addEventListener("load", function () {
+        importTestData(reader.result);
+    });
+    reader.addEventListener("error", function () {
+        document.getElementById("testDataMessage").textContent =
+            "Die Datei konnte nicht gelesen werden.";
+    });
+    reader.readAsText(file);
+}
+
+// Parses, validates, and replaces the saved data with the selected test data.
+function importTestData(jsonText) {
+    const message = document.getElementById("testDataMessage");
+    const data = parseTestData(jsonText, message);
+    if (data === undefined) {
+        return;
+    }
+    if (!isValidTestData(data)) {
+        message.textContent =
+            "Ungültiges Format. Erwartet werden exercises und trainingEntries.";
+        return;
+    }
+    if (!saveImportedTestData(data, message)) {
+        return;
+    }
+    replaceImportedTestData(data);
+    message.textContent = "Testdaten wurden geladen und ersetzen die bisherigen Daten.";
+}
+
+// Parses the selected text and shows an error when it is not valid JSON.
+function parseTestData(jsonText, message) {
+    try {
+        return JSON.parse(jsonText);
+    } catch (error) {
+        message.textContent = "Die Datei enthält kein gültiges JSON.";
+        return undefined;
+    }
+}
+
+// Replaces the app data and refreshes the visible pages.
+function replaceImportedTestData(data) {
+    exercises = data.exercises;
+    trainingEntries = data.trainingEntries;
+    editingDate = null;
+    closeTrainingForm();
+    updateExerciseSelect();
+    showTrainingSessions();
+    showExerciseList();
+    showStatistics();
+}
+
+// Checks that the JSON contains exercise names and valid training entries.
+function isValidTestData(data) {
+    if (!data || !Array.isArray(data.exercises) || !Array.isArray(data.trainingEntries)) {
+        return false;
+    }
+    for (let index = 0; index < data.exercises.length; index++) {
+        if (typeof data.exercises[index] !== "string" || data.exercises[index].trim() === "") {
+            return false;
+        }
+    }
+    for (let index = 0; index < data.trainingEntries.length; index++) {
+        if (!isValidTestEntry(data.trainingEntries[index], data.exercises)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Checks that one training entry matches the format used by the app.
+function isValidTestEntry(entry, exerciseNames) {
+    if (!entry || typeof entry !== "object" || !Number.isFinite(entry.id)) {
+        return false;
+    }
+    if (typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) {
+        return false;
+    }
+    if (typeof entry.trainingName !== "string" || entry.trainingName.trim() === "") {
+        return false;
+    }
+    if (!exerciseNames.includes(entry.exercise) || !Array.isArray(entry.sets) || entry.sets.length === 0) {
+        return false;
+    }
+    for (let index = 0; index < entry.sets.length; index++) {
+        if (!isValidTestSet(entry.sets[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Checks that one set has a valid weight and repetition count.
+function isValidTestSet(set) {
+    return set && Number.isFinite(set.weight) && set.weight >= 0 &&
+        Number.isInteger(set.repetitions) && set.repetitions > 0;
+}
+
+// Saves both imported lists or reports a browser storage error.
+function saveImportedTestData(data, message) {
+    const previousExercises = localStorage.getItem("exerciseList");
+    const previousEntries = localStorage.getItem("trainingEntries");
+    try {
+        localStorage.setItem("exerciseList", JSON.stringify(data.exercises));
+        localStorage.setItem("trainingEntries", JSON.stringify(data.trainingEntries));
+        return true;
+    } catch (error) {
+        try {
+            restoreStorageValue("exerciseList", previousExercises);
+            restoreStorageValue("trainingEntries", previousEntries);
+        } catch (restoreError) {
+            message.textContent =
+                "Speichern fehlgeschlagen; die bisherigen Daten konnten nicht vollständig wiederhergestellt werden.";
+            return false;
+        }
+        message.textContent = "Speichern fehlgeschlagen; die bisherigen Daten wurden beibehalten.";
+        return false;
+    }
+}
+
+// Restores one storage value after an import cannot be saved.
+function restoreStorageValue(key, value) {
+    if (value === null) {
+        localStorage.removeItem(key);
+    } else {
+        localStorage.setItem(key, value);
+    }
+}
+
 // Refreshes the exercise menus in every exercise block.
 function updateExerciseSelect() {
     const exerciseSelects = document.querySelectorAll(".exercise-select");
@@ -973,6 +1115,8 @@ function startApp() {
     showExerciseList();
 
     document.getElementById("newTrainingButton").addEventListener("click", openNewTrainingForm);
+    document.getElementById("loadTestDataButton").addEventListener("click", chooseTestDataFile);
+    document.getElementById("testDataFile").addEventListener("change", readTestDataFile);
     document.getElementById("cancelTrainingButton").addEventListener("click", cancelTrainingForm);
     document.getElementById("addExerciseEntryButton").addEventListener("click", addExerciseEntry);
     document.getElementById("exerciseEntries").addEventListener("click", handleExerciseEntryClick);

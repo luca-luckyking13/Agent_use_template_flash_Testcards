@@ -118,6 +118,27 @@ h1 {
     margin: 0;
 }
 
+.overview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.overview-actions button {
+    width: auto;
+    margin: 0;
+}
+
+.import-format {
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.import-format pre {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
 .new-training-button {
     width: auto;
     margin: 0;
