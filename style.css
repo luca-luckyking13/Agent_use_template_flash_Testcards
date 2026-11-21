@@ -127,6 +127,44 @@ select {
     background: white;
 }
 
+.exercise-entry-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.exercise-entry {
+    padding: 18px;
+    border: 1px solid #e4def2;
+    border-radius: 14px;
+    background: #fbfaff;
+}
+
+.exercise-entry-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.exercise-entry-heading h3 {
+    margin: 0;
+}
+
+.remove-exercise-button {
+    width: auto;
+    margin-top: 0;
+    padding: 9px 12px;
+}
+
+.create-sets-button {
+    margin-top: 14px;
+}
+
+.add-exercise-entry-button {
+    margin-top: 18px;
+}
+
 .primary-button,
 .secondary-button {
     width: 100%;

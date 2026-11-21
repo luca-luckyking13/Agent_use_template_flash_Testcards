@@ -23,21 +23,19 @@
         <section class="page active" id="trainingPage">
             <div class="layout training-layout">
                 <div class="panel">
-                    <h2>Übung hinzufügen</h2>
+                    <h2>Trainingseinheit auswählen</h2>
                     <form id="trainingForm">
-                        <label for="trainingDate">Datum</label>
+                        <label for="sessionSelect">Gespeicherte Trainingseinheit</label>
+                        <select id="sessionSelect">
+                            <option value="">Neue Trainingseinheit</option>
+                        </select>
+
+                        <label for="trainingDate">Datum der Trainingseinheit</label>
                         <input type="date" id="trainingDate" required>
 
-                        <label for="exerciseSelect">Übung</label>
-                        <select id="exerciseSelect" required></select>
-
-                        <label for="setCount">Anzahl der Sätze</label>
-                        <input type="number" id="setCount" min="1" max="20" value="3" required>
-
-                        <button class="secondary-button" id="createSetsButton" type="button">Sätze erstellen</button>
-                        <div id="setFields"></div>
-
-                        <button class="primary-button" type="submit">Training speichern</button>
+                        <div class="exercise-entry-list" id="exerciseEntries"></div>
+                        <button class="secondary-button add-exercise-entry-button" id="addExerciseEntryButton" type="button">+ Übung hinzufügen</button>
+                        <button class="primary-button" type="submit">Trainingseinheit speichern</button>
                     </form>
                 </div>
             </div>

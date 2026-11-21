@@ -13,6 +13,7 @@ const defaultExercises = [
 
 let exercises = loadExercises();
 let trainingEntries = loadTrainingEntries();
+let nextExerciseEntryId = 0;
 
 // Loads saved training entries and removes the old generated sample data.
 function loadTrainingEntries() {
@@ -83,23 +84,102 @@ function loadExercises() {
     return defaultExercises.slice();
 }
 
-// Saves the exercise list and refreshes the drop-down menu.
+// Refreshes the exercise menus in every exercise block.
 function updateExerciseSelect() {
-    const exerciseSelect = document.getElementById("exerciseSelect");
-    exerciseSelect.innerHTML = "";
+    const exerciseSelects = document.querySelectorAll(".exercise-select");
+    for (let selectIndex = 0; selectIndex < exerciseSelects.length; selectIndex++) {
+        const exerciseSelect = exerciseSelects[selectIndex];
+        const previousValue = exerciseSelect.value;
+        exerciseSelect.innerHTML = "";
 
-    for (let index = 0; index < exercises.length; index++) {
-        const option = document.createElement("option");
-        option.textContent = exercises[index];
-        option.value = exercises[index];
-        exerciseSelect.appendChild(option);
+        for (let index = 0; index < exercises.length; index++) {
+            const option = document.createElement("option");
+            option.textContent = exercises[index];
+            option.value = exercises[index];
+            exerciseSelect.appendChild(option);
+        }
+        if (exercises.includes(previousValue)) {
+            exerciseSelect.value = previousValue;
+        }
     }
 }
 
-// Creates input fields for weight and repetitions for every set.
-function createSetFields() {
-    const setCount = Number(document.getElementById("setCount").value);
-    const setFields = document.getElementById("setFields");
+// Adds another exercise form to the selected training unit.
+function addExerciseEntry() {
+    const exerciseEntries = document.getElementById("exerciseEntries");
+    const exerciseEntry = makeExerciseEntry(nextExerciseEntryId);
+    nextExerciseEntryId++;
+    exerciseEntries.appendChild(exerciseEntry);
+    updateExerciseSelect();
+    updateExerciseEntryNumbers();
+    createSetFields(exerciseEntry);
+}
+
+// Creates one exercise form with a set count and remove button.
+function makeExerciseEntry(entryId) {
+    const exerciseEntry = document.createElement("div");
+    const headingRow = document.createElement("div");
+    const heading = document.createElement("h3");
+    const removeButton = document.createElement("button");
+    const exerciseLabel = document.createElement("label");
+    const exerciseSelect = document.createElement("select");
+    const setCountLabel = document.createElement("label");
+    const setCount = document.createElement("input");
+    const createSetsButton = document.createElement("button");
+    const setFields = document.createElement("div");
+
+    exerciseEntry.className = "exercise-entry";
+    exerciseEntry.dataset.entryId = entryId;
+    headingRow.className = "exercise-entry-heading";
+    heading.textContent = "Übung";
+    removeButton.className = "secondary-button remove-exercise-button";
+    removeButton.type = "button";
+    removeButton.textContent = "Entfernen";
+    headingRow.appendChild(heading);
+    headingRow.appendChild(removeButton);
+    exerciseSelect.className = "exercise-select";
+    exerciseSelect.id = "exercise-select-" + entryId;
+    exerciseSelect.required = true;
+    exerciseLabel.htmlFor = exerciseSelect.id;
+    exerciseLabel.textContent = "Übung";
+    setCount.id = "set-count-" + entryId;
+    setCount.className = "exercise-set-count";
+    setCount.type = "number";
+    setCount.min = "1";
+    setCount.max = "20";
+    setCount.value = "3";
+    setCount.required = true;
+    setCountLabel.htmlFor = setCount.id;
+    setCountLabel.textContent = "Anzahl der Sätze";
+    createSetsButton.className = "secondary-button create-sets-button";
+    createSetsButton.type = "button";
+    createSetsButton.textContent = "Sätze erstellen";
+    setFields.className = "exercise-set-fields";
+    exerciseEntry.appendChild(headingRow);
+    exerciseEntry.appendChild(exerciseLabel);
+    exerciseEntry.appendChild(exerciseSelect);
+    exerciseEntry.appendChild(setCountLabel);
+    exerciseEntry.appendChild(setCount);
+    exerciseEntry.appendChild(createSetsButton);
+    exerciseEntry.appendChild(setFields);
+    return exerciseEntry;
+}
+
+// Numbers the exercise blocks and hides removal for the first one.
+function updateExerciseEntryNumbers() {
+    const exerciseEntries = document.querySelectorAll(".exercise-entry");
+    for (let index = 0; index < exerciseEntries.length; index++) {
+        const heading = exerciseEntries[index].querySelector("h3");
+        const removeButton = exerciseEntries[index].querySelector(".remove-exercise-button");
+        heading.textContent = "Übung " + (index + 1);
+        removeButton.hidden = index === 0;
+    }
+}
+
+// Creates input fields for each set in one exercise block.
+function createSetFields(exerciseEntry) {
+    const setCount = Number(exerciseEntry.querySelector(".exercise-set-count").value);
+    const setFields = exerciseEntry.querySelector(".exercise-set-fields");
     setFields.innerHTML = "";
 
     if (setCount < 1) {
@@ -236,41 +316,101 @@ function saveExerciseName(exerciseIndex, newName) {
     message.textContent = "Übungsname wurde geändert.";
 }
 
-// Reads all set fields and saves one complete training entry.
+// Saves all exercises in the selected training unit under one date.
 function saveTraining(event) {
     event.preventDefault();
 
     const date = document.getElementById("trainingDate").value;
-    const exercise = document.getElementById("exerciseSelect").value;
-    const weightInputs = document.querySelectorAll(".set-weight");
-    const repetitionInputs = document.querySelectorAll(".set-reps");
-    const sets = [];
+    const exerciseBlocks = document.querySelectorAll(".exercise-entry");
+    const newEntries = [];
 
-    for (let index = 0; index < weightInputs.length; index++) {
-        const weight = Number(weightInputs[index].value);
-        const repetitions = Number(repetitionInputs[index].value);
-        if (weightInputs[index].value === "" || repetitionInputs[index].value === "") {
+    for (let index = 0; index < exerciseBlocks.length; index++) {
+        const exercise = exerciseBlocks[index].querySelector(".exercise-select").value;
+        const sets = collectExerciseSets(exerciseBlocks[index]);
+        if (sets === null) {
             alert("Bitte für jeden Satz Gewicht und Wiederholungen eingeben.");
             return;
         }
-        sets.push({ weight: weight, repetitions: repetitions });
+        newEntries.push({ id: Date.now() + index, date: date, exercise: exercise, sets: sets });
     }
 
-    trainingEntries.push({
-        id: Date.now(),
-        date: date,
-        exercise: exercise,
-        sets: sets
-    });
+    for (let index = 0; index < newEntries.length; index++) {
+        trainingEntries.push(newEntries[index]);
+    }
 
     localStorage.setItem("trainingEntries", JSON.stringify(trainingEntries));
+    updateSessionSelect(date);
     showTrainingTable();
     showStatistics();
-    document.getElementById("trainingForm").reset();
-    document.getElementById("setCount").value = "3";
-    document.getElementById("trainingDate").value =
-        new Date().toISOString().split("T")[0];
-    createSetFields();
+    document.getElementById("exerciseEntries").innerHTML = "";
+    nextExerciseEntryId = 0;
+    addExerciseEntry();
+}
+
+// Reads the weights and repetitions from one exercise block.
+function collectExerciseSets(exerciseEntry) {
+    const weightInputs = exerciseEntry.querySelectorAll(".set-weight");
+    const repetitionInputs = exerciseEntry.querySelectorAll(".set-reps");
+    const sets = [];
+
+    for (let index = 0; index < weightInputs.length; index++) {
+        if (weightInputs[index].value === "" || repetitionInputs[index].value === "") {
+            return null;
+        }
+        sets.push({
+            weight: Number(weightInputs[index].value),
+            repetitions: Number(repetitionInputs[index].value)
+        });
+    }
+    return sets;
+}
+
+// Handles add/remove and set-building buttons inside exercise blocks.
+function handleExerciseEntryClick(event) {
+    const exerciseEntry = event.target.closest(".exercise-entry");
+    if (event.target.classList.contains("create-sets-button")) {
+        createSetFields(exerciseEntry);
+        return;
+    }
+    if (event.target.classList.contains("remove-exercise-button")) {
+        exerciseEntry.remove();
+        updateExerciseEntryNumbers();
+    }
+}
+
+// Fills the training-unit menu with saved dates.
+function updateSessionSelect(selectedDate) {
+    const sessionSelect = document.getElementById("sessionSelect");
+    const dates = [];
+    for (let index = 0; index < trainingEntries.length; index++) {
+        const date = trainingEntries[index].date;
+        if (!dates.includes(date)) {
+            dates.push(date);
+        }
+    }
+    dates.sort(function (firstDate, secondDate) {
+        return secondDate.localeCompare(firstDate);
+    });
+
+    sessionSelect.innerHTML = "";
+    const newOption = document.createElement("option");
+    newOption.value = "";
+    newOption.textContent = "Neue Trainingseinheit";
+    sessionSelect.appendChild(newOption);
+    for (let index = 0; index < dates.length; index++) {
+        const option = document.createElement("option");
+        option.value = dates[index];
+        option.textContent = formatDate(dates[index]);
+        sessionSelect.appendChild(option);
+    }
+    sessionSelect.value = dates.includes(selectedDate) ? selectedDate : "";
+}
+
+// Loads a saved date or starts a new unit with today's date.
+function selectTrainingSession() {
+    const sessionDate = document.getElementById("sessionSelect").value;
+    const trainingDate = document.getElementById("trainingDate");
+    trainingDate.value = sessionDate || new Date().toISOString().split("T")[0];
 }
 
 // Displays every saved training entry in a table.
@@ -327,6 +467,7 @@ function deleteTraining(event) {
         return entry.id !== entryId;
     });
     localStorage.setItem("trainingEntries", JSON.stringify(trainingEntries));
+    updateSessionSelect(document.getElementById("trainingDate").value);
     showTrainingTable();
     showStatistics();
 }
@@ -353,15 +494,20 @@ function openTab(tabName) {
 function showStatistics() {
     let setTotal = 0;
     let usedExercises = [];
+    let usedDates = [];
     for (let index = 0; index < trainingEntries.length; index++) {
         setTotal = setTotal + trainingEntries[index].sets.length;
         const exerciseName = trainingEntries[index].exercise;
+        const trainingDate = trainingEntries[index].date;
         if (!usedExercises.includes(exerciseName)) {
             usedExercises.push(exerciseName);
         }
+        if (!usedDates.includes(trainingDate)) {
+            usedDates.push(trainingDate);
+        }
     }
 
-    document.getElementById("trainingCount").textContent = trainingEntries.length;
+    document.getElementById("trainingCount").textContent = usedDates.length;
     document.getElementById("exerciseCount").textContent = usedExercises.length;
     document.getElementById("setTotal").textContent = setTotal;
     showExerciseChart();
@@ -621,13 +767,18 @@ function startApp() {
     const today = new Date();
     const dateText = today.toISOString().split("T")[0];
     document.getElementById("trainingDate").value = dateText;
-    updateExerciseSelect();
-    createSetFields();
+    addExerciseEntry();
+    updateSessionSelect(dateText);
     showTrainingTable();
     showStatistics();
     showExerciseList();
 
-    document.getElementById("createSetsButton").addEventListener("click", createSetFields);
+    document.getElementById("addExerciseEntryButton").addEventListener("click", addExerciseEntry);
+    document.getElementById("exerciseEntries").addEventListener("click", handleExerciseEntryClick);
+    document.getElementById("sessionSelect").addEventListener("change", selectTrainingSession);
+    document.getElementById("trainingDate").addEventListener("change", function () {
+        updateSessionSelect(document.getElementById("trainingDate").value);
+    });
     document.getElementById("exerciseForm").addEventListener("submit", addExercise);
     document.getElementById("exerciseTable").addEventListener("click", renameExercise);
     document.getElementById("trainingForm").addEventListener("submit", saveTraining);
