@@ -161,6 +161,11 @@ select {
     min-width: 180px;
 }
 
+.exercise-name-input[readonly] {
+    cursor: default;
+    background: #f6f3fd;
+}
+
 .exercise-table-button {
     width: auto;
     margin-top: 0;

@@ -172,9 +172,10 @@ function makeExerciseRow(index) {
 
     nameInput.className = "exercise-name-input";
     nameInput.value = exercises[index];
+    nameInput.readOnly = true;
     nameInput.setAttribute("aria-label", "Übungsname ändern");
-    saveButton.className = "secondary-button exercise-table-button";
-    saveButton.textContent = "Speichern";
+    saveButton.className = "secondary-button exercise-table-button exercise-edit-button";
+    saveButton.textContent = "Bearbeiten";
     saveButton.dataset.index = index;
     actionCell.appendChild(saveButton);
     nameCell.appendChild(nameInput);
@@ -193,16 +194,26 @@ function updateTrainingExerciseNames(oldName, newName) {
     localStorage.setItem("trainingEntries", JSON.stringify(trainingEntries));
 }
 
-// Saves a changed exercise name and updates its saved training entries.
+// Enables a name field or saves it after the user presses the button again.
 function renameExercise(event) {
-    if (!event.target.classList.contains("secondary-button")) {
+    if (!event.target.classList.contains("exercise-edit-button")) {
         return;
     }
 
     const exerciseIndex = Number(event.target.dataset.index);
     const input = event.target.parentElement.previousElementSibling.querySelector("input");
-    const newName = input.value.trim();
-    const oldName = exercises[exerciseIndex];
+    if (input.readOnly) {
+        input.readOnly = false;
+        event.target.textContent = "Speichern";
+        input.focus();
+        return;
+    }
+
+    saveExerciseName(exerciseIndex, input.value.trim());
+}
+
+// Checks and saves a changed name together with its training history.
+function saveExerciseName(exerciseIndex, newName) {
     const message = document.getElementById("exerciseMessage");
 
     if (newName === "") {
@@ -214,6 +225,7 @@ function renameExercise(event) {
         return;
     }
 
+    const oldName = exercises[exerciseIndex];
     exercises[exerciseIndex] = newName;
     localStorage.setItem("exerciseList", JSON.stringify(exercises));
     updateTrainingExerciseNames(oldName, newName);
