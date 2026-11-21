@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainingstagebuch</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="app">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Gym Logbuch</p>
+                <h1>Mein Training</h1>
+            </div>
+            <div class="nav-tabs" aria-label="Seiten">
+                <button class="tab-button active" id="trainingTab" type="button">Training</button>
+                <button class="tab-button" id="statisticsTab" type="button">Statistik</button>
+            </div>
+        </header>
+
+        <section class="page active" id="trainingPage">
+            <div class="layout">
+                <div class="panel">
+                    <h2>Übung hinzufügen</h2>
+                    <form id="trainingForm">
+                        <label for="trainingDate">Datum</label>
+                        <input type="date" id="trainingDate" required>
+
+                        <label for="exerciseSelect">Übung</label>
+                        <select id="exerciseSelect" required></select>
+
+                        <label for="setCount">Anzahl der Sätze</label>
+                        <input type="number" id="setCount" min="1" max="20" value="3" required>
+
+                        <button class="secondary-button" id="createSetsButton" type="button">Sätze erstellen</button>
+                        <div id="setFields"></div>
+
+                        <button class="primary-button" type="submit">Training speichern</button>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-heading">
+                        <h2>Neue Übung</h2>
+                    </div>
+                    <div class="exercise-form">
+                        <label for="newExerciseName">Name der Übung</label>
+                        <input type="text" id="newExerciseName" placeholder="Zum Beispiel Kreuzheben">
+                        <button class="secondary-button" id="addExerciseButton" type="button">Zur Liste hinzufügen</button>
+                    </div>
+                    <p class="message" id="exerciseMessage"></p>
+                </div>
+            </div>
+
+            <div class="panel table-panel">
+                <div class="panel-heading">
+                    <h2>Gespeicherte Trainingseinheiten</h2>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Datum</th>
+                                <th>Übung</th>
+                                <th>Sätze</th>
+                                <th>Details</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="trainingTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="page" id="statisticsPage">
+            <div class="layout stats-layout">
+                <div class="stat-card">
+                    <p>Trainings</p>
+                    <strong id="trainingCount">0</strong>
+                </div>
+                <div class="stat-card">
+                    <p>Übungen</p>
+                    <strong id="exerciseCount">0</strong>
+                </div>
+                <div class="stat-card">
+                    <p>Gesamtanzahl Sätze</p>
+                    <strong id="setTotal">0</strong>
+                </div>
+            </div>
+
+            <div class="layout">
+                <div class="panel chart-panel">
+                    <h2>Häufigste Übungen</h2>
+                    <div class="bar-chart" id="exerciseChart"></div>
+                </div>
+                <div class="panel chart-panel">
+                    <h2>Gewicht nach Übung</h2>
+                    <div class="bar-chart" id="weightChart"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

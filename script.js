@@ -1,0 +1,365 @@
+const defaultExercises = [
+    "Bankdrücken",
+    "Kniebeugen",
+    "Kreuzheben",
+    "Schrägbankdrücken",
+    "Rudern",
+    "Latziehen",
+    "Beinpresse",
+    "Seitheben",
+    "Bizepscurls",
+    "Trizepsdrücken"
+];
+
+let exercises = loadExercises();
+let trainingEntries = loadTrainingEntries();
+
+// Loads saved training entries and removes the old generated sample data.
+function loadTrainingEntries() {
+    const savedEntries = localStorage.getItem("trainingEntries");
+    if (!savedEntries) {
+        return [];
+    }
+
+    const trainingEntries = JSON.parse(savedEntries);
+    if (isGeneratedExampleData(trainingEntries)) {
+        localStorage.removeItem("trainingEntries");
+        return [];
+    }
+    return trainingEntries;
+}
+
+// Recognizes the old sample data without removing ordinary user entries.
+function isGeneratedExampleData(entries) {
+    const sampleExercises = [
+        "Bankdrücken", "Kniebeugen", "Kreuzheben",
+        "Rudern", "Latziehen", "Seitheben"
+    ];
+    if (entries.length !== 20 && entries.length !== 120) {
+        return false;
+    }
+
+    const entriesPerDay = entries.length / 20;
+    const dayCounts = {};
+    for (let index = 0; index < entries.length; index++) {
+        const entry = entries[index];
+        if (!sampleExercises.includes(entry.exercise) || entry.sets.length !== 3) {
+            return false;
+        }
+        for (let setIndex = 0; setIndex < entry.sets.length; setIndex++) {
+            const repetitions = entry.sets[setIndex].repetitions;
+            if (repetitions < 8 || repetitions > 12) {
+                return false;
+            }
+        }
+        dayCounts[entry.date] = (dayCounts[entry.date] || 0) + 1;
+    }
+
+    const dates = Object.keys(dayCounts).sort();
+    if (dates.length !== 20) {
+        return false;
+    }
+    for (let index = 0; index < dates.length; index++) {
+        if (dayCounts[dates[index]] !== entriesPerDay) {
+            return false;
+        }
+        if (index > 0) {
+            const previousDate = new Date(dates[index - 1] + "T00:00:00Z");
+            const currentDate = new Date(dates[index] + "T00:00:00Z");
+            if (currentDate - previousDate !== 86400000) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// Finds saved exercises or uses the list of standard exercises.
+function loadExercises() {
+    const savedExercises = localStorage.getItem("exerciseList");
+    if (savedExercises) {
+        return JSON.parse(savedExercises);
+    }
+    return defaultExercises.slice();
+}
+
+// Saves the exercise list and refreshes the drop-down menu.
+function updateExerciseSelect() {
+    const exerciseSelect = document.getElementById("exerciseSelect");
+    exerciseSelect.innerHTML = "";
+
+    for (let index = 0; index < exercises.length; index++) {
+        const option = document.createElement("option");
+        option.textContent = exercises[index];
+        option.value = exercises[index];
+        exerciseSelect.appendChild(option);
+    }
+}
+
+// Creates input fields for weight and repetitions for every set.
+function createSetFields() {
+    const setCount = Number(document.getElementById("setCount").value);
+    const setFields = document.getElementById("setFields");
+    setFields.innerHTML = "";
+
+    if (setCount < 1) {
+        return;
+    }
+
+    for (let setNumber = 1; setNumber <= setCount; setNumber++) {
+        const setRow = document.createElement("div");
+        setRow.className = "set-row";
+        setRow.innerHTML =
+            '<span>Satz ' + setNumber + '</span>' +
+            '<div><label>Gewicht (kg)</label><input class="set-weight" type="number" min="0" step="0.5" required></div>' +
+            '<div><label>Wiederholungen</label><input class="set-reps" type="number" min="1" required></div>';
+        setFields.appendChild(setRow);
+    }
+}
+
+// Adds a new exercise to the saved list.
+function addExercise() {
+    const nameInput = document.getElementById("newExerciseName");
+    const exerciseName = nameInput.value.trim();
+    const message = document.getElementById("exerciseMessage");
+
+    if (exerciseName === "") {
+        message.textContent = "Bitte einen Namen eingeben.";
+        return;
+    }
+
+    for (let index = 0; index < exercises.length; index++) {
+        if (exercises[index].toLowerCase() === exerciseName.toLowerCase()) {
+            message.textContent = "Diese Übung ist schon vorhanden.";
+            return;
+        }
+    }
+
+    exercises.push(exerciseName);
+    localStorage.setItem("exerciseList", JSON.stringify(exercises));
+    updateExerciseSelect();
+    nameInput.value = "";
+    message.textContent = "Übung wurde hinzugefügt.";
+}
+
+// Reads all set fields and saves one complete training entry.
+function saveTraining(event) {
+    event.preventDefault();
+
+    const date = document.getElementById("trainingDate").value;
+    const exercise = document.getElementById("exerciseSelect").value;
+    const weightInputs = document.querySelectorAll(".set-weight");
+    const repetitionInputs = document.querySelectorAll(".set-reps");
+    const sets = [];
+
+    for (let index = 0; index < weightInputs.length; index++) {
+        const weight = Number(weightInputs[index].value);
+        const repetitions = Number(repetitionInputs[index].value);
+        if (weightInputs[index].value === "" || repetitionInputs[index].value === "") {
+            alert("Bitte für jeden Satz Gewicht und Wiederholungen eingeben.");
+            return;
+        }
+        sets.push({ weight: weight, repetitions: repetitions });
+    }
+
+    trainingEntries.push({
+        id: Date.now(),
+        date: date,
+        exercise: exercise,
+        sets: sets
+    });
+
+    localStorage.setItem("trainingEntries", JSON.stringify(trainingEntries));
+    showTrainingTable();
+    showStatistics();
+    document.getElementById("trainingForm").reset();
+    document.getElementById("setCount").value = "3";
+    document.getElementById("trainingDate").value =
+        new Date().toISOString().split("T")[0];
+    createSetFields();
+}
+
+// Displays every saved training entry in a table.
+function showTrainingTable() {
+    const tableBody = document.getElementById("trainingTable");
+    tableBody.innerHTML = "";
+
+    for (let index = trainingEntries.length - 1; index >= 0; index--) {
+        const entry = trainingEntries[index];
+        const row = document.createElement("tr");
+        const details = makeSetDetails(entry.sets);
+        row.innerHTML =
+            "<td>" + formatDate(entry.date) + "</td>" +
+            "<td>" + escapeHtml(entry.exercise) + "</td>" +
+            "<td>" + entry.sets.length + "</td>" +
+            "<td>" + details + "</td>" +
+            '<td><button class="delete-button" type="button" data-id="' +
+            entry.id + '">Löschen</button></td>';
+        tableBody.appendChild(row);
+    }
+}
+
+// Builds short text for all sets of one exercise.
+function makeSetDetails(sets) {
+    const details = [];
+    for (let index = 0; index < sets.length; index++) {
+        details.push(sets[index].weight + " kg × " + sets[index].repetitions);
+    }
+    return details.join(", ");
+}
+
+// Converts special characters before text is used in HTML.
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+// Changes the database date into a readable German date.
+function formatDate(dateText) {
+    const date = new Date(dateText + "T00:00:00");
+    return date.toLocaleDateString("de-DE");
+}
+
+// Deletes one training entry from the saved list.
+function deleteTraining(event) {
+    if (!event.target.classList.contains("delete-button")) {
+        return;
+    }
+
+    const entryId = Number(event.target.dataset.id);
+    trainingEntries = trainingEntries.filter(function (entry) {
+        return entry.id !== entryId;
+    });
+    localStorage.setItem("trainingEntries", JSON.stringify(trainingEntries));
+    showTrainingTable();
+    showStatistics();
+}
+
+// Switches between the training and statistics pages.
+function openTab(tabName) {
+    const trainingPage = document.getElementById("trainingPage");
+    const statisticsPage = document.getElementById("statisticsPage");
+    const trainingTab = document.getElementById("trainingTab");
+    const statisticsTab = document.getElementById("statisticsTab");
+
+    trainingPage.classList.remove("active");
+    statisticsPage.classList.remove("active");
+    trainingTab.classList.remove("active");
+    statisticsTab.classList.remove("active");
+
+    if (tabName === "training") {
+        trainingPage.classList.add("active");
+        trainingTab.classList.add("active");
+    } else {
+        statisticsPage.classList.add("active");
+        statisticsTab.classList.add("active");
+        showStatistics();
+    }
+}
+
+// Calculates totals and draws simple statistics bars.
+function showStatistics() {
+    let setTotal = 0;
+    let usedExercises = [];
+    for (let index = 0; index < trainingEntries.length; index++) {
+        setTotal = setTotal + trainingEntries[index].sets.length;
+        const exerciseName = trainingEntries[index].exercise;
+        if (!usedExercises.includes(exerciseName)) {
+            usedExercises.push(exerciseName);
+        }
+    }
+
+    document.getElementById("trainingCount").textContent = trainingEntries.length;
+    document.getElementById("exerciseCount").textContent = usedExercises.length;
+    document.getElementById("setTotal").textContent = setTotal;
+    showExerciseChart();
+    showWeightChart();
+}
+
+// Counts how often each exercise was used.
+function showExerciseChart() {
+    const exerciseCount = {};
+    for (let index = 0; index < trainingEntries.length; index++) {
+        const exerciseName = trainingEntries[index].exercise;
+        if (exerciseCount[exerciseName]) {
+            exerciseCount[exerciseName]++;
+        } else {
+            exerciseCount[exerciseName] = 1;
+        }
+    }
+    drawChart("exerciseChart", exerciseCount, " Mal");
+}
+
+// Finds the highest weight saved for each exercise.
+function showWeightChart() {
+    const highestWeights = {};
+    for (let entryIndex = 0; entryIndex < trainingEntries.length; entryIndex++) {
+        const entry = trainingEntries[entryIndex];
+        for (let setIndex = 0; setIndex < entry.sets.length; setIndex++) {
+            const weight = entry.sets[setIndex].weight;
+            if (!highestWeights[entry.exercise] || weight > highestWeights[entry.exercise]) {
+                highestWeights[entry.exercise] = weight;
+            }
+        }
+    }
+    drawChart("weightChart", highestWeights, " kg");
+}
+
+// Creates horizontal bars from the supplied name and number data.
+function drawChart(chartId, values, unit) {
+    const chart = document.getElementById(chartId);
+    chart.innerHTML = "";
+    const names = Object.keys(values);
+
+    if (names.length === 0) {
+        chart.innerHTML = '<p class="empty-chart">Noch keine Daten vorhanden.</p>';
+        return;
+    }
+
+    let highestValue = 0;
+    for (let index = 0; index < names.length; index++) {
+        if (values[names[index]] > highestValue) {
+            highestValue = values[names[index]];
+        }
+    }
+
+    for (let index = 0; index < names.length; index++) {
+        const name = names[index];
+        const value = values[name];
+        const width = (value / highestValue) * 100;
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        row.innerHTML =
+            "<span>" + escapeHtml(name) + "</span>" +
+            '<div class="bar-track"><div class="bar-fill" style="width:' +
+            width + '%"></div></div>' +
+            "<strong>" + value + unit + "</strong>";
+        chart.appendChild(row);
+    }
+}
+
+// Starts the page and connects all buttons.
+function startApp() {
+    const today = new Date();
+    const dateText = today.toISOString().split("T")[0];
+    document.getElementById("trainingDate").value = dateText;
+    updateExerciseSelect();
+    createSetFields();
+    showTrainingTable();
+    showStatistics();
+
+    document.getElementById("createSetsButton").addEventListener("click", createSetFields);
+    document.getElementById("addExerciseButton").addEventListener("click", addExercise);
+    document.getElementById("trainingForm").addEventListener("submit", saveTraining);
+    document.getElementById("trainingTable").addEventListener("click", deleteTraining);
+    document.getElementById("trainingTab").addEventListener("click", function () {
+        openTab("training");
+    });
+    document.getElementById("statisticsTab").addEventListener("click", function () {
+        openTab("statistics");
+    });
+}
+
+startApp();
