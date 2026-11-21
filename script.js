@@ -365,8 +365,7 @@ function showStatistics() {
     document.getElementById("exerciseCount").textContent = usedExercises.length;
     document.getElementById("setTotal").textContent = setTotal;
     showExerciseChart();
-    showWeightChart();
-    showRepetitionChart();
+    showExerciseCharts();
 }
 
 // Counts how often each exercise was used.
@@ -383,40 +382,201 @@ function showExerciseChart() {
     drawChart("exerciseChart", exerciseCount, " Mal");
 }
 
-// Counts how many sets used each weight for each exercise.
-function showWeightChart() {
-    const weightCounts = {};
-    for (let entryIndex = 0; entryIndex < trainingEntries.length; entryIndex++) {
-        const entry = trainingEntries[entryIndex];
-        for (let setIndex = 0; setIndex < entry.sets.length; setIndex++) {
-            const weight = entry.sets[setIndex].weight;
-            const label = entry.exercise + " · " + weight + " kg";
-            if (weightCounts[label]) {
-                weightCounts[label]++;
-            } else {
-                weightCounts[label] = 1;
-            }
-        }
+// Draws two frequency line charts for every saved exercise.
+function showExerciseCharts() {
+    const chartContainer = document.getElementById("exerciseCharts");
+    chartContainer.innerHTML = "";
+
+    for (let index = 0; index < exercises.length; index++) {
+        const exerciseName = exercises[index];
+        const card = document.createElement("section");
+        card.className = "panel exercise-chart-card";
+        const heading = document.createElement("h3");
+        heading.textContent = exerciseName;
+        const charts = document.createElement("div");
+        charts.className = "exercise-line-grid";
+        card.appendChild(heading);
+        addExerciseLineChart(charts, exerciseName, "weight", "Gewicht (kg)", "kg");
+        addExerciseLineChart(charts, exerciseName, "repetitions", "Wiederholungen", "Wdh.");
+        card.appendChild(charts);
+        chartContainer.appendChild(card);
     }
-    drawChart("weightChart", weightCounts, " Sätze");
 }
 
-// Counts how many sets used each repetition number for each exercise.
-function showRepetitionChart() {
-    const repetitionCounts = {};
+// Adds one titled line chart for the selected exercise value.
+function addExerciseLineChart(container, exerciseName, fieldName, title, unit) {
+    const chartPanel = document.createElement("div");
+    const heading = document.createElement("h4");
+    const description = document.createElement("p");
+    const chart = document.createElement("div");
+
+    chartPanel.className = "frequency-chart";
+    heading.textContent = title;
+    description.className = "chart-description";
+    description.textContent = "X: Wert · Y: Anzahl der Sätze";
+    chart.className = "line-chart";
+    chartPanel.appendChild(heading);
+    chartPanel.appendChild(description);
+    chartPanel.appendChild(chart);
+    drawFrequencyChart(chart, collectExerciseFrequencies(exerciseName, fieldName), unit);
+    container.appendChild(chartPanel);
+}
+
+// Counts how many sets used each value for this exercise.
+function collectExerciseFrequencies(exerciseName, fieldName) {
+    const counts = {};
     for (let entryIndex = 0; entryIndex < trainingEntries.length; entryIndex++) {
         const entry = trainingEntries[entryIndex];
+        if (entry.exercise !== exerciseName) {
+            continue;
+        }
         for (let setIndex = 0; setIndex < entry.sets.length; setIndex++) {
-            const repetitions = entry.sets[setIndex].repetitions;
-            const label = entry.exercise + " · " + repetitions + " Wdh.";
-            if (repetitionCounts[label]) {
-                repetitionCounts[label]++;
-            } else {
-                repetitionCounts[label] = 1;
-            }
+            const value = Number(entry.sets[setIndex][fieldName]);
+            counts[value] = (counts[value] || 0) + 1;
         }
     }
-    drawChart("repetitionChart", repetitionCounts, " Sätze");
+
+    const values = Object.keys(counts).map(Number);
+    values.sort(function (firstValue, secondValue) {
+        return firstValue - secondValue;
+    });
+    const frequencies = [];
+    for (let index = 0; index < values.length; index++) {
+        frequencies.push({ value: values[index], count: counts[values[index]] });
+    }
+    return frequencies;
+}
+
+// Creates a frequency graph, including an empty graph when no data exists.
+function drawFrequencyChart(container, frequencies, unit) {
+    const svg = createSvgElement("svg", {
+        viewBox: "0 0 520 230",
+        role: "img",
+        "aria-label": "Häufigkeitsdiagramm für " + unit
+    });
+    const maxCount = findHighestFrequency(frequencies);
+    drawFrequencyAxes(svg, maxCount);
+
+    if (frequencies.length === 0) {
+        addSvgText(svg, 285, 112, "Noch keine Satzdaten");
+    } else {
+        drawFrequencyLine(svg, frequencies, maxCount, unit);
+    }
+    container.appendChild(svg);
+}
+
+// Finds the largest frequency for the vertical chart scale.
+function findHighestFrequency(frequencies) {
+    let highest = 0;
+    for (let index = 0; index < frequencies.length; index++) {
+        if (frequencies[index].count > highest) {
+            highest = frequencies[index].count;
+        }
+    }
+    return highest;
+}
+
+// Draws the horizontal and vertical axes with frequency guide lines.
+function drawFrequencyAxes(svg, maxCount) {
+    const left = 52;
+    const right = 500;
+    const top = 18;
+    const bottom = 185;
+    addFrequencyGridLine(svg, left, right, top);
+    addFrequencyGridLine(svg, left, right, bottom);
+    if (maxCount > 1) {
+        const middleCount = Math.ceil(maxCount / 2);
+        const middleY = bottom - (middleCount / maxCount) * (bottom - top);
+        addFrequencyGridLine(svg, left, right, middleY);
+        addSvgText(svg, 35, middleY + 5, middleCount);
+    }
+    svg.appendChild(createSvgElement("line", {
+        x1: left, y1: top, x2: left, y2: bottom, class: "frequency-axis-line"
+    }));
+    svg.appendChild(createSvgElement("line", {
+        x1: left, y1: bottom, x2: right, y2: bottom, class: "frequency-axis-line"
+    }));
+    addSvgText(svg, 35, top + 5, maxCount);
+    addSvgText(svg, 35, bottom + 5, 0);
+}
+
+// Adds one horizontal frequency guide line to the chart.
+function addFrequencyGridLine(svg, left, right, y) {
+    svg.appendChild(createSvgElement("line", {
+        x1: left, y1: y, x2: right, y2: y, class: "frequency-grid-line"
+    }));
+}
+
+// Draws a rising or falling line through the measured frequencies.
+function drawFrequencyLine(svg, frequencies, maxCount, unit) {
+    const firstValue = frequencies[0].value;
+    const lastValue = frequencies[frequencies.length - 1].value;
+    const points = [];
+
+    for (let index = 0; index < frequencies.length; index++) {
+        points.push(getFrequencyPoint(frequencies[index], firstValue, lastValue, maxCount));
+    }
+
+    const pointList = points.map(function (point) {
+        return point.x + "," + point.y;
+    }).join(" ");
+    svg.appendChild(createSvgElement("polyline", {
+        points: pointList, class: "frequency-line"
+    }));
+    addFrequencyPoints(svg, points, unit);
+}
+
+// Calculates where one measured value belongs in the chart.
+function getFrequencyPoint(frequency, firstValue, lastValue, maxCount) {
+    const left = 52;
+    const right = 500;
+    const top = 18;
+    const bottom = 185;
+    let x = (left + right) / 2;
+    if (lastValue !== firstValue) {
+        x = left + ((frequency.value - firstValue) / (lastValue - firstValue)) * (right - left);
+    }
+    const y = bottom - (frequency.count / maxCount) * (bottom - top);
+    return { x: x, y: y, value: frequency.value, count: frequency.count };
+}
+
+// Adds visible data points and their labels to the line chart.
+function addFrequencyPoints(svg, points, unit) {
+    const bottom = 185;
+    const labelStep = Math.ceil(points.length / 7);
+    for (let index = 0; index < points.length; index++) {
+        const point = points[index];
+        const circle = createSvgElement("circle", {
+            cx: point.x, cy: point.y, r: 5, class: "frequency-point"
+        });
+        const title = createSvgElement("title", {});
+        title.textContent = point.value + " " + unit + ": " + point.count + " Sätze";
+        circle.appendChild(title);
+        svg.appendChild(circle);
+        if (points.length <= 7 || index % labelStep === 0 || index === points.length - 1) {
+            addSvgText(svg, point.x, bottom + 22, point.value, "frequency-value-label");
+        }
+    }
+}
+
+// Creates an SVG element with the supplied attributes.
+function createSvgElement(tagName, attributes) {
+    const element = document.createElementNS("http://www.w3.org/2000/svg", tagName);
+    const attributeNames = Object.keys(attributes);
+    for (let index = 0; index < attributeNames.length; index++) {
+        element.setAttribute(attributeNames[index], attributes[attributeNames[index]]);
+    }
+    return element;
+}
+
+// Adds centered text to an SVG chart.
+function addSvgText(svg, x, y, text, className) {
+    const label = createSvgElement("text", {
+        x: x, y: y, class: className || "frequency-axis-label",
+        "text-anchor": "middle"
+    });
+    label.textContent = text;
+    svg.appendChild(label);
 }
 
 // Creates horizontal bars from the supplied name and number data.

@@ -271,6 +271,73 @@ th {
     color: #81789a;
 }
 
+.exercise-charts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.exercise-chart-card h3 {
+    margin-bottom: 18px;
+}
+
+.exercise-line-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.frequency-chart {
+    min-width: 0;
+}
+
+.frequency-chart h4 {
+    margin: 0 0 4px;
+}
+
+.chart-description {
+    margin-bottom: 4px;
+    color: #6c628a;
+    font-size: 12px;
+}
+
+.line-chart svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.frequency-grid-line {
+    stroke: #e8e3f3;
+    stroke-width: 1;
+}
+
+.frequency-axis-line {
+    stroke: #8d83a7;
+    stroke-width: 1.5;
+}
+
+.frequency-line {
+    fill: none;
+    stroke: #7259c4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 3;
+}
+
+.frequency-point {
+    fill: #39b9a2;
+    stroke: white;
+    stroke-width: 2;
+}
+
+.frequency-axis-label,
+.frequency-value-label {
+    fill: #6c628a;
+    font-size: 12px;
+}
+
 @media (max-width: 760px) {
     .topbar,
     .layout {
@@ -283,6 +350,11 @@ th {
     }
 
     .stats-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .exercise-charts,
+    .exercise-line-grid {
         grid-template-columns: 1fr;
     }
 
